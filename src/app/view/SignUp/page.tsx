@@ -10,6 +10,7 @@ import {
   InputAdornment,
   IconButton,
   Alert,
+  CircularProgress,
 } from "@mui/material";
 import {
   Google,
@@ -24,6 +25,7 @@ import Link from "next/link";
 import { SignUpWithEmail } from "@/app/Firebase/service";
 import { updateProfile } from "firebase/auth";
 import { useRouter } from "next/navigation";
+
 const SignUp = () => {
   // states
   const [showPassword, setShowPassword] = useState(false);
@@ -33,28 +35,44 @@ const SignUp = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false); 
   const router = useRouter();
+
+  //  validation
+  const validateForm = () => {
+    if (!name) return "Full Name is required";
+    if (!email) return "Email is required";
+    if (!/\S+@\S+\.\S+/.test(email)) return "Enter a valid email address";
+    if (!password) return "Password is required";
+    if (password.length < 6) return "Password must be at least 6 characters";
+    if (password !== confirmPassword) return "Passwords do not match!";
+    return null;
+  };
+
   const handleUser = async () => {
     setError(null);
 
-    if (password !== confirmPassword) {
-      setError("Passwords do not match!");
+    const validationError = validateForm();
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
+    setLoading(true);
     try {
       const catchUser = await SignUpWithEmail(email, password);
-      router.push("/view/SignIn");
-      // Firebase me displayName update karna
+
       if (catchUser.user) {
         await updateProfile(catchUser.user, {
           displayName: name,
         });
       }
 
-      console.log("User:", catchUser);
+      router.push("/view/Dashboard"); 
     } catch (err: any) {
       setError(err.message || "Sign up failed");
+    } finally {
+      setLoading(false); 
     }
   };
 
@@ -90,11 +108,13 @@ const SignUp = () => {
             Sign Up
           </Typography>
 
-          {/* Full Name */}
           <TextField
             label="Full Name"
             type="text"
+            value={name}
             onChange={(e) => setName(e.target.value)}
+            error={error?.includes("Full Name") || false}
+            helperText={error?.includes("Full Name") ? error : ""}
             fullWidth
             margin="normal"
             required
@@ -107,12 +127,15 @@ const SignUp = () => {
             }}
           />
 
-          {/* Email */}
           <TextField
             label="Email"
             type="email"
-            value={email}   
+            value={email}
             onChange={(e) => setEmail(e.target.value)}
+            error={error?.toLowerCase().includes("email") || false}
+            helperText={
+              error?.toLowerCase().includes("email") ? error : ""
+            }
             fullWidth
             margin="normal"
             required
@@ -125,13 +148,16 @@ const SignUp = () => {
             }}
           />
 
-          {/* Password */}
           <TextField
             label="Password"
             onChange={(e) => setPassword(e.target.value)}
             type={showPassword ? "text" : "password"}
             fullWidth
-            value={password}   
+            value={password}
+            error={error?.toLowerCase().includes("password") || false}
+            helperText={
+              error?.toLowerCase().includes("password") ? error : ""
+            }
             margin="normal"
             required
             InputProps={{
@@ -150,11 +176,13 @@ const SignUp = () => {
             }}
           />
 
-          {/* Confirm Password */}
           <TextField
             label="Confirm Password"
             onChange={(e) => setConfirmPassword(e.target.value)}
             type={showConfirmPassword ? "text" : "password"}
+            value={confirmPassword}
+            error={error?.includes("match") || false}
+            helperText={error?.includes("match") ? error : ""}
             fullWidth
             margin="normal"
             required
@@ -167,7 +195,9 @@ const SignUp = () => {
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    onClick={() =>
+                      setShowConfirmPassword(!showConfirmPassword)
+                    }
                   >
                     {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
                   </IconButton>
@@ -176,17 +206,21 @@ const SignUp = () => {
             }}
           />
 
-          {/* Error / Success Messages */}
-          {error && (
-            <Alert severity="error" sx={{ mt: 2 }}>
-              {error}
-            </Alert>
-          )}
+          {error &&
+            !error.includes("Full Name") &&
+            !error.toLowerCase().includes("email") &&
+            !error.toLowerCase().includes("password") &&
+            !error.includes("match") && (
+              <Alert severity="error" sx={{ mt: 2 }}>
+                {error}
+              </Alert>
+            )}
 
           <Button
             onClick={handleUser}
             variant="contained"
             fullWidth
+            disabled={loading} 
             sx={{
               mt: 3,
               py: 1.3,
@@ -198,12 +232,15 @@ const SignUp = () => {
               },
             }}
           >
-            Sign Up
+            {loading ? (
+              <CircularProgress size={24} sx={{ color: "white" }} />
+            ) : (
+              "Sign Up"
+            )}
           </Button>
 
           <Divider sx={{ my: 3 }}>or</Divider>
 
-          {/* Google Button */}
           <Button
             fullWidth
             variant="outlined"
@@ -219,7 +256,6 @@ const SignUp = () => {
             Sign up with Google
           </Button>
 
-          {/* Login Text */}
           <Typography
             variant="body2"
             align="center"
@@ -235,7 +271,7 @@ const SignUp = () => {
                 textDecoration: "underline",
               }}
             >
-              <Link href="/auth/SignIn">Login</Link>
+              <Link href="/view/SignIn">Login</Link>
             </Typography>
           </Typography>
         </CardContent>

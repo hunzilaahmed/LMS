@@ -1,11 +1,8 @@
 import React from 'react'
-import Dashboard from './view/Dashboard/page'
 
 const page = () => {
   return (
-    <>
-    <Dashboard/>
-    </>
+    <div>page Dash</div>
   )
 }
 
