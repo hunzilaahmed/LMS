@@ -22,7 +22,7 @@ import {
 } from "@mui/icons-material";
 import React, { useState } from "react";
 import Link from "next/link";
-import { SignUpWithEmail } from "@/app/Firebase/service";
+import { SignUpWithEmail, signUpWithGoogle } from "@/app/Firebase/service";
 import { updateProfile } from "firebase/auth";
 import { useRouter } from "next/navigation";
 
@@ -35,7 +35,7 @@ const SignUp = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false); 
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   //  validation
@@ -68,11 +68,11 @@ const SignUp = () => {
         });
       }
 
-      router.push("/view/Dashboard"); 
+      router.push("/view/Dashboard");
     } catch (err: any) {
       setError(err.message || "Sign up failed");
     } finally {
-      setLoading(false); 
+      setLoading(false);
     }
   };
 
@@ -133,9 +133,7 @@ const SignUp = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             error={error?.toLowerCase().includes("email") || false}
-            helperText={
-              error?.toLowerCase().includes("email") ? error : ""
-            }
+            helperText={error?.toLowerCase().includes("email") ? error : ""}
             fullWidth
             margin="normal"
             required
@@ -155,9 +153,7 @@ const SignUp = () => {
             fullWidth
             value={password}
             error={error?.toLowerCase().includes("password") || false}
-            helperText={
-              error?.toLowerCase().includes("password") ? error : ""
-            }
+            helperText={error?.toLowerCase().includes("password") ? error : ""}
             margin="normal"
             required
             InputProps={{
@@ -195,9 +191,7 @@ const SignUp = () => {
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton
-                    onClick={() =>
-                      setShowConfirmPassword(!showConfirmPassword)
-                    }
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   >
                     {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
                   </IconButton>
@@ -220,7 +214,7 @@ const SignUp = () => {
             onClick={handleUser}
             variant="contained"
             fullWidth
-            disabled={loading} 
+            disabled={loading}
             sx={{
               mt: 3,
               py: 1.3,
@@ -241,20 +235,51 @@ const SignUp = () => {
 
           <Divider sx={{ my: 3 }}>or</Divider>
 
-          <Button
-            fullWidth
-            variant="outlined"
-            startIcon={<Google />}
-            sx={{
-              py: 1.2,
-              textTransform: "none",
-              borderRadius: 3,
-              fontWeight: 500,
-              ":hover": { backgroundColor: "#f5f5f5" },
-            }}
-          >
-            Sign up with Google
-          </Button>
+          {loading ? (
+            <Button
+              fullWidth
+              variant="outlined"
+              disabled
+              startIcon={<Google />}
+              sx={{
+                py: 1.2,
+                textTransform: "none",
+                borderRadius: 3,
+                fontWeight: 500,
+              }}
+            >
+              <CircularProgress size={22} />
+            </Button>
+          ) : (
+            <Button
+              fullWidth
+              variant="outlined"
+              startIcon={<Google />}
+              onClick={async () => {
+                // signUpWithGoogle()
+                try {
+                  setLoading(true);
+                  const result = await signUpWithGoogle();
+                  setLoading(false);
+                  console.log("Google User:", result.user);
+                  router.push("/view/Dashboard");
+                } catch (err: any) {
+                  console.error("Google SignUp Error:", err);
+                  const errorMessage = err?.message || "Google sign up failed";
+                  setError(errorMessage);
+                }
+              }}
+              sx={{
+                py: 1.2,
+                textTransform: "none",
+                borderRadius: 3,
+                fontWeight: 500,
+                ":hover": { backgroundColor: "#f5f5f5" },
+              }}
+            >
+              Sign up with Google
+            </Button>
+          )}
 
           <Typography
             variant="body2"

@@ -1,5 +1,5 @@
 "use client";
-import { SignInWithEmail } from "@/app/Firebase/service";
+import { SignInWithEmail, signUpWithGoogle } from "@/app/Firebase/service";
 import {
   Box,
   Button,
@@ -10,9 +10,11 @@ import {
   Typography,
   Link,
   Alert,
+  Divider,
 } from "@mui/material";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Google } from "@mui/icons-material";
 
 export default function SignIn() {
   const [email, setEmail] = useState("");
@@ -21,61 +23,57 @@ export default function SignIn() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const [emailError, setEmailError] = useState<string | null>(null);
-const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
 
- const validateForm = () => {
-  let valid = true;
+  const validateForm = () => {
+    let valid = true;
 
-  if (!email) {
-    setEmailError("Email is required");
-    valid = false;
-  } else if (!/\S+@\S+\.\S+/.test(email)) {
-    setEmailError("Enter a valid email address");
-    valid = false;
-  } else {
-    setEmailError(""); 
-  }
+    if (!email) {
+      setEmailError("Email is required");
+      valid = false;
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      setEmailError("Enter a valid email address");
+      valid = false;
+    } else {
+      setEmailError("");
+    }
 
-  if (!password) {
-    setPasswordError("Password is required");
-    valid = false;
-  } else if (password.length < 6) {
-    setPasswordError("Password must be at least 6 characters");
-    valid = false;
-  } else {
-    setPasswordError(""); 
-  }
+    if (!password) {
+      setPasswordError("Password is required");
+      valid = false;
+    } else if (password.length < 6) {
+      setPasswordError("Password must be at least 6 characters");
+      valid = false;
+    } else {
+      setPasswordError("");
+    }
 
-  return valid;
-};
+    return valid;
+  };
 
+  const handleUser = async () => {
+    const isValid = validateForm();
+    if (!isValid) return;
 
-const handleUser = async () => {
-  const isValid = validateForm(); 
-  if (!isValid) return; 
+    setError(null);
+    setLoading(true);
 
-  setError(null); 
-  setLoading(true);
-
-  try {
-    const catchUser = await SignInWithEmail(email, password);
-    router.push("/view/Dashboard");
-    console.log(catchUser);
-  } catch (err: any) {
-    setError(err.message || "Sign in failed");
-  } finally {
-    setLoading(false);
-  }
-};
-
-
-
+    try {
+      const catchUser = await SignInWithEmail(email, password);
+      router.push("/view/Dashboard");
+      console.log(catchUser);
+    } catch (err: any) {
+      setError(err.message || "Sign in failed");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-  if (e.key === "Enter") {
-    handleUser();
-  }
-};
+    if (e.key === "Enter") {
+      handleUser();
+    }
+  };
 
   return (
     <Box
@@ -126,7 +124,7 @@ const handleUser = async () => {
             type="email"
             onChange={(e) => setEmail(e.target.value)}
             onKeyDown={handleKeyDown}
-            error={!!emailError} 
+            error={!!emailError}
             helperText={emailError}
             required
             fullWidth
@@ -206,6 +204,33 @@ const handleUser = async () => {
               Sign Up
             </Link>
           </Typography>
+          <Divider sx={{ my: 2 }}>or</Divider>
+          <Button
+            sx={{
+              backgroundColor: "white",
+              borderRadius: 3,
+              textTransform: "none",
+              py: 1,
+              fontWeight: 500,
+            }}
+            fullWidth
+            variant="outlined"
+            startIcon={<Google color="primary" />}
+            onClick={async () => {
+              try {
+                setLoading(true);
+                const result = await signUpWithGoogle();
+                setLoading(false);
+                console.log("Google User:", result.user);
+                router.push("/view/Dashboard"); // redirect after success
+              } catch (err: any) {
+                console.error("Google SignIn Error:", err);
+                setError(err?.message || "Google sign in failed");
+              }
+            }}
+          >
+            Sign in with Google
+          </Button>
         </Paper>
       </Container>
     </Box>
