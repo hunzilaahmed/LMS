@@ -79,10 +79,12 @@ const SignUp = () => {
   return (
     <Box
       sx={{
-        minHeight: "100vh",
-        backgroundImage: 'url("/Images/Sign.jpg")',
+        width: "100%",
+        height: "100vh",
+        backgroundImage: `url('/Sign.jpg')`,
         backgroundSize: "cover",
         backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -91,7 +93,7 @@ const SignUp = () => {
     >
       <Card
         sx={{
-          width: 480,
+          width: 500,
           borderRadius: 4,
           backgroundColor: "rgba(255, 255, 255, 0.75)",
           backdropFilter: "blur(10px)",
